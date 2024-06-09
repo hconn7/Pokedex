@@ -9,12 +9,6 @@ import (
 
 // Cli Stuct
 
-type cliCommand struct {
-	name        string
-	description string
-	callback    func() error
-}
-
 // CliCommands
 
 func getCommands() map[string]cliCommand {
