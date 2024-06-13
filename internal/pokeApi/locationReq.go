@@ -2,37 +2,46 @@ package pokeapi
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 )
 
-func (c *Client) ListLocationAreas() (LocationAreaResp, error) {
-	endpoint := "/location-area"
-	fullURL := baseURL + endpoint
+// ListLocations -
+func (c *Client) GetLocation(locationName string) (Location, error) {
+	url := baseURL + "/location-area/" + locationName
 
-	req, err := http.NewRequest("GET", fullURL, nil)
-
-	if err != nil {
-		return LocationAreaResp{}, err
+	if val, ok := c.cache.Get(url); ok {
+		locationResp := Location{}
+		err := json.Unmarshal(val, &locationResp)
+		if err != nil {
+			return Location{}, err
+		}
+		return locationResp, nil
 	}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return Location{}, err
+	}
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return LocationAreaResp{}, err
+		return Location{}, err
 	}
+	defer resp.Body.Close()
 
-	if resp.StatusCode > 299 {
-		return LocationAreaResp{}, fmt.Errorf("error, status code: %v", resp.StatusCode)
-	}
 	dat, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return LocationAreaResp{}, err
+		return Location{}, err
 	}
-	locationResp := LocationAreaResp{}
+
+	locationResp := Location{}
 	err = json.Unmarshal(dat, &locationResp)
 	if err != nil {
-		return LocationAreaResp{}, err
+		return Location{}, err
 	}
+
+	c.cache.Add(url, dat)
 
 	return locationResp, nil
 }
